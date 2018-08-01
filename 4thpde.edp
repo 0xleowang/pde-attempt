@@ -1,0 +1,30 @@
+// solving u_tt - u_xxxx = f
+// 
+// decoupled as a PDE system - u_xx = sigma ; u_tt - sigma_xx = f
+//   with boundary conditions - Dirichlet sigma = 0 and u = 0 
+//                            - Neumann u = g
+
+
+mesh Th=square(32,32);  // mesh definition of $\Omega$
+fespace Vh(Th,P2);      // finite element space
+func f=-(pow(pi,2)+pow(pi,4))*sin(pi*x)*sin(pi*y);
+func g=pi*cos(pi*x)*sin(pi*y);
+
+
+Vh phi, sig, u, v;
+
+solve pde([phi,sig],[u,v]) = 
+        int2d(Th)(dy(phi)*dy(u) + dy(sig)*dy(v) - dx(phi)*dx(v) + sig*u)
+	    - int2d(Th)(f*v)
+      + int1d(Th,2)(g*v) - int1d(Th,4)(g*v)
+      + on(1,3,phi=0,sig=0);
+
+
+plot(phi,wait=1,fill=1,value=1);
+plot(Th,wait=1,fill=1);
+
+func phiext = sin(pi*x)*sin(pi*y);
+
+Vh errors = abs(phi - phiext);
+plot(errors,wait=1,fill=1,value=1);
+cout << "error:" << errors[].sum << endl;
